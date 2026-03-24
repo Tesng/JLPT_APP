@@ -1,0 +1,57 @@
+body {
+    font-family: sans-serif;
+    background-color: #f4f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 350px;
+}
+
+.header { margin-bottom: 20px; }
+select { padding: 5px; font-size: 16px; border-radius: 5px; }
+
+h2 { color: #4CAF50; font-size: 36px; margin: 10px 0; }
+h3 { font-size: 16px; color: #666; }
+
+.options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* 選項按鈕的預設樣式 */
+.option-btn {
+    padding: 12px;
+    border: 2px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: 0.2s;
+}
+
+.option-btn:hover { background: #f0f0f0; }
+
+/* 答對與答錯的顏色 */
+.option-btn.correct { background: #4CAF50; color: white; border-color: #4CAF50; }
+.option-btn.wrong { background: #f44336; color: white; border-color: #f44336; }
+
+.hidden { display: none; }
+#feedback-msg { font-size: 18px; font-weight: bold; margin-top: 15px; }
+#next-btn {
+    margin-top: 15px; width: 100%; padding: 12px;
+    background: #2196F3; color: white; border: none;
+    border-radius: 5px; cursor: pointer; font-size: 16px;
+}
+#next-btn:hover { background: #1976D2; }

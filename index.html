@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>JLPT 測驗系統</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="card">
+        <div class="header">
+            <label for="level-select">選擇級別：</label>
+            <select id="level-select">
+                <option value="ALL">全部 (N4+N5)</option>
+                <option value="N5">僅 N5</option>
+                <option value="N4">僅 N4</option>
+            </select>
+        </div>
+
+        <h3 id="question-text">請問這個單字的意思是？</h3>
+        <h2 id="japanese-word">載入中...</h2>
+
+        <div id="options-container" class="options">
+            </div>
+
+        <p id="feedback-msg" class="hidden"></p>
+        <button id="next-btn" class="hidden">下一題</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
