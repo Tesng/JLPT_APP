@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT 學習系統</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="dashboard-view" class="dashboard">
+        <header>
+            <h1><span class="icon">📖</span> JLPT 学習</h1>
+            <p>レベルを選択してください</p>
+            <button id="theme-toggle" class="theme-toggle" title="切換主題">🔆</button>
+        </header>
+
+        <div class="level-grid" id="level-container">
+            <div class="level-card" onclick="selectLevel('N5', this)"><h2>N5</h2><p class="sub-text">初級</p></div>
+            <div class="level-card" onclick="selectLevel('N4', this)"><h2>N4</h2><p class="sub-text">初中級</p></div>
+            <div class="level-card" onclick="selectLevel('N3', this)"><h2>N3</h2><p class="sub-text">中級</p></div>
+            <div class="level-card" onclick="selectLevel('N2', this)"><h2>N2</h2><p class="sub-text">中上級</p></div>
+            <div class="level-card active" onclick="selectLevel('N1', this)"><h2>N1</h2><p class="sub-text">上級</p></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card clickable" onclick="showVocabList('all')">
+                <div class="stat-title"><span style="color: #4da6ff;">📖</span> 總題庫清單</div>
+                <div class="stat-value" id="stat-total">0</div><div class="stat-sub">查看所有單字</div>
+            </div>
+            <div class="stat-card clickable" onclick="showVocabList('correct')">
+                <div class="stat-title"><span style="color: #2ebd59;">✅</span> 答對單字</div>
+                <div class="stat-value" id="stat-correct">0</div><div class="stat-sub">查看已掌握</div>
+            </div>
+            <div class="stat-card clickable" onclick="showVocabList('wrong')">
+                <div class="stat-title"><span style="color: #ff9800;">🎯</span> 錯題記錄</div>
+                <div class="stat-value" id="stat-wrong">0</div><div class="stat-sub">查看待加強</div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-primary" onclick="showSessionConfig('learn')">学習を始める (學習模式)</button>
+            <button class="btn-secondary" onclick="showSessionConfig('practice')">練習モード (測驗設定)</button>
+            <button class="btn-secondary" onclick="startSession('wrong')">錯題本</button>
+        </div>
+    </div>
+
+    <div id="quiz-view" class="quiz-container hidden">
+        <div class="quiz-header">
+            <button id="back-btn" class="back-btn" onclick="goBackFromQuiz()">⬅️ 戻る</button>
+            <div class="progress-bg"><div class="progress-bar" id="progress-bar"></div></div>
+            <span id="score-display">0 / 0</span>
+        </div>
+        
+        <div class="quiz-card">
+            <h3 id="question-text">這個單字的意思是？</h3>
+            <h2 id="japanese-word">載入中...</h2>
+            
+            <p id="kana-text" class="kana-text hidden">たべる</p>
+            
+            <div id="learning-box" class="learning-box hidden">
+                <p class="learning-meaning">意思：<span id="learn-meaning">吃</span></p>
+                <div class="divider"></div>
+                <p class="learning-ex-jp"><span id="learn-ex-jp">私はりんごを食べる。</span></p>
+                <p class="learning-ex-zh"><span id="learn-ex-zh">我吃蘋果。</span></p>
+            </div>
+
+            <div id="options-container" class="options"></div>
+            
+            <div id="feedback-area" class="hidden">
+                <p id="feedback-msg"></p>
+                <button class="btn-primary" style="width: 100%; padding: 16px;" onclick="generateQuestion()">下一題 ➔</button>
+            </div>
+
+            <button id="learn-next-btn" class="btn-primary hidden" style="width: 100%; padding: 16px; margin-top: 20px;" onclick="generateQuestion()">下一個單字 ➔</button>
+        </div>
+    </div>
+
+    <div id="list-view" class="list-container hidden">
+        <div class="list-header">
+            <button class="back-btn" onclick="showDashboard()">⬅️ 戻る (返回大廳)</button>
+            <h2 id="list-title">單字列表</h2>
+        </div>
+        <div id="list-content" class="list-content"></div>
+    </div>
+
+    <div id="session-config-view" class="config-container hidden">
+        <div class="config-card">
+            <h2 id="config-title">⚙️ 模式設定</h2>
+            
+            <div class="input-group">
+                <label id="config-num-label">要抽取幾題？ (預設10題)</label>
+                <input type="number" id="session-num-input" min="1" value="10" placeholder="輸入數量">
+            </div>
+
+            <div class="action-buttons" style="margin-top: 35px;">
+                <button id="config-start-btn" class="btn-primary" style="width: 100%;" onclick="startCustomSession()">開始 ➔</button>
+                <button class="btn-secondary" style="width: 100%; border: none;" onclick="showDashboard()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
