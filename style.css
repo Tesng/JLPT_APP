@@ -240,3 +240,38 @@ body.light-mode .btn-primary:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 body.light-mode .vocab-item.clickable:hover {
     border-color: rgba(0, 0, 0, 0.2);
 }
+/* ======== 結算視圖與彈跳動畫 ======== */
+.summary-container { width: 100%; max-width: 500px; padding: 20px; text-align: center; }
+.summary-header h2 { font-size: 32px; color: var(--text-main); margin: 0 0 10px 0; }
+.summary-header p { color: var(--text-sub); margin-bottom: 25px; font-size: 15px; }
+.summary-content { display: flex; flex-direction: column; gap: 12px; max-height: 55vh; overflow-y: auto; padding: 10px 5px; }
+
+/* 隱藏滾動條保持版面乾淨 */
+.summary-content::-webkit-scrollbar { width: 6px; }
+.summary-content::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+.summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    padding: 16px 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    
+    /* 🌟 動畫設定：預設透明度 0，交給 keyframes 彈出 */
+    opacity: 0;
+    transform: scale(0.5);
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.summary-card .vocab-jp { font-size: 20px; font-weight: bold; color: var(--text-main); }
+.summary-card .vocab-zh { font-size: 16px; color: var(--text-sub); }
+
+/* 🌟 彈跳動畫腳本 */
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.5) translateY(20px); }
+    70% { transform: scale(1.05) translateY(0); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}

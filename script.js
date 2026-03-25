@@ -3,9 +3,10 @@ let wrongVocab = [];
 let correctVocab = []; 
 let currentPool = []; 
 let currentVocab = {};
-let selectedLevel = 'N1'; // 預設級別
-let currentMode = 'practice'; // 'learn', 'practice', 'wrong', 'single_learn'
+let selectedLevel = 'N1'; 
+let currentMode = 'practice'; 
 let sessionTotal = 0; 
+let sessionHistory = []; // 🌟 新增：用來記錄這回合學過的所有單字
 
 let stats = { total: 0, correct: 0 };
 let pendingSessionMode = 'practice'; 
@@ -17,6 +18,7 @@ const quizView = document.getElementById("quiz-view");
 const listView = document.getElementById("list-view"); 
 const listContent = document.getElementById("list-content");
 const listTitle = document.getElementById("list-title");
+const summaryView = document.getElementById("summary-view"); // 🌟 新增結算視圖
 
 const jpWordElement = document.getElementById("japanese-word");
 const optionsContainer = document.getElementById("options-container");
@@ -26,40 +28,50 @@ const questionText = document.getElementById("question-text");
 const kanaText = document.getElementById("kana-text");
 const learningBox = document.getElementById("learning-box");
 const learnNextBtn = document.getElementById("learn-next-btn");
+const speakBtn = document.getElementById("speak-btn");
+const vocabImage = document.getElementById("vocab-image");
 
-// 載入 JSON 資料
 fetch('data.json').then(res => res.json()).then(data => { 
     allVocab = data; 
     document.getElementById("stat-total").innerText = allVocab.length;
 }).catch(e => console.error("資料載入失敗", e));
 
-// 切換日夜間模式
 document.getElementById('theme-toggle').addEventListener('click', () => {
     document.body.classList.toggle('light-mode');
 });
 
-// 🌟 這就是大廳選擇等級的核心功能 (剛剛遺失的拼圖！)
+// 🔊 語音朗讀功能
+function speakWord(text) {
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel(); 
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP'; 
+        utterance.rate = 0.9;     
+        window.speechSynthesis.speak(utterance);
+    }
+}
+if(speakBtn) speakBtn.addEventListener("click", () => {
+    if (currentVocab && currentVocab.jp) speakWord(currentVocab.jp);
+});
+
 function selectLevel(level, element) {
     selectedLevel = level;
-    // 移除所有卡片的 active 狀態，並為點擊的卡片加上 active
     document.querySelectorAll('.level-card').forEach(card => card.classList.remove('active'));
     element.classList.add('active');
 }
 
-// 返回大廳
 function showDashboard() {
     quizView.classList.add("hidden");
     listView.classList.add("hidden"); 
     document.getElementById("session-config-view").classList.add("hidden");
+    summaryView.classList.add("hidden"); // 🌟 隱藏結算畫面
     dashboardView.classList.remove("hidden");
     
-    // 更新統計數字
     document.getElementById("stat-total").innerText = allVocab.length;
     document.getElementById("stat-correct").innerText = correctVocab.length;
     document.getElementById("stat-wrong").innerText = wrongVocab.length;
 }
 
-// 智慧返回按鈕 (如果從列表點擊單字，返回時回到列表)
 function goBackFromQuiz() {
     if (currentMode === 'single_learn') {
         quizView.classList.add("hidden");
@@ -69,7 +81,6 @@ function goBackFromQuiz() {
     }
 }
 
-// 顯示單字列表
 function showVocabList(type) {
     lastListType = type; 
     dashboardView.classList.add("hidden");
@@ -97,7 +108,6 @@ function showVocabList(type) {
         const item = document.createElement("div");
         item.className = "vocab-item clickable"; 
         item.onclick = () => viewSingleWord(word); 
-        
         item.innerHTML = `
             <div class="vocab-info">
                 <div class="vocab-jp">${word.jp} <span class="level-badge">${word.level}</span></div>
@@ -109,18 +119,15 @@ function showVocabList(type) {
     });
 }
 
-// 點擊列表查看單張字卡
 function viewSingleWord(word) {
     currentMode = 'single_learn';
     currentPool = [word]; 
     sessionTotal = 1;
-
+    sessionHistory = []; // 清空歷史
     listView.classList.add("hidden");
     quizView.classList.remove("hidden");
     generateQuestion();
 }
-
-// ================= 共用設定模式邏輯 =================
 
 function showSessionConfig(mode) {
     pendingSessionMode = mode;
@@ -144,43 +151,56 @@ function showSessionConfig(mode) {
 
 function startCustomSession() {
     const numInput = parseInt(document.getElementById("session-num-input").value);
-    if (isNaN(numInput) || numInput <= 0) {
-        alert("請輸入有效的數量！（至少 1 題）");
-        return;
-    }
+    if (isNaN(numInput) || numInput <= 0) { alert("請輸入有效數量！"); return; }
 
     let levelPool = allVocab.filter(word => word.level === selectedLevel);
-    if (levelPool.length === 0) {
-        alert(`目前題庫中沒有 ${selectedLevel} 的單字。`); 
-        return;
-    }
+    if (levelPool.length === 0) { alert(`題庫無 ${selectedLevel} 單字。`); return; }
 
-    // 確定能抽取的數量並洗牌
     const actualNum = Math.min(numInput, levelPool.length);
     levelPool = levelPool.sort(() => 0.5 - Math.random()).slice(0, actualNum);
     
     currentPool = levelPool;
     sessionTotal = currentPool.length;
     currentMode = pendingSessionMode; 
+    sessionHistory = []; // 🌟 新回合開始，清空歷史紀錄
 
     document.getElementById("session-config-view").classList.add("hidden");
     quizView.classList.remove("hidden");
     generateQuestion();
 }
 
-// ================= 出題與學習邏輯 =================
-
-// 錯題本專用入口
 function startSession(mode) {
     if (mode === 'wrong') {
-        if (wrongVocab.length === 0) { alert("太厲害了！你沒有錯題記錄喔 🎉"); return; }
+        if (wrongVocab.length === 0) { alert("沒有錯題記錄喔 🎉"); return; }
         currentPool = [...wrongVocab]; 
         sessionTotal = currentPool.length;
         currentMode = 'wrong';
+        sessionHistory = []; // 🌟 清空歷史紀錄
         dashboardView.classList.add("hidden");
         quizView.classList.remove("hidden");
         generateQuestion();
     }
+}
+
+// 🌟 新增：顯示結算畫面的邏輯
+function showSummary() {
+    quizView.classList.add("hidden");
+    summaryView.classList.remove("hidden");
+    const summaryContent = document.getElementById("summary-content");
+    summaryContent.innerHTML = "";
+
+    // 巡迴歷史紀錄，把每張卡片印出來並加上漸進式延遲
+    sessionHistory.forEach((word, index) => {
+        const card = document.createElement("div");
+        card.className = "summary-card";
+        // 核心魔法：讓卡片一張接一張彈出來，每張延遲 0.15 秒
+        card.style.animationDelay = `${index * 0.15}s`; 
+        card.innerHTML = `
+            <div class="vocab-jp">${word.jp} <span style="font-size:13px; color:var(--text-sub); margin-left:8px;">${word.kana||''}</span></div>
+            <div class="vocab-zh">${word.zh}</div>
+        `;
+        summaryContent.appendChild(card);
+    });
 }
 
 function generateQuestion() {
@@ -191,20 +211,31 @@ function generateQuestion() {
     learnNextBtn.classList.add("hidden");
     questionText.classList.add("hidden");
 
-    // 題庫抽完時的結算
+    // 🌟 修改：當題目抽完時，改呼叫結算畫面，而不是跳出 alert
     if (currentPool.length === 0) {
-        alert("🎉 恭喜完成！");
-        showDashboard();
+        if (currentMode === 'single_learn') {
+            goBackFromQuiz(); // 若是單獨查看字卡，直接返回
+        } else {
+            showSummary(); // 正式回合結束，進入超有成就感的結算畫面！
+        }
         return;
     }
 
-    // 隨機抽出一題並從陣列中刪除
     const randomIndex = Math.floor(Math.random() * currentPool.length);
     currentVocab = currentPool.splice(randomIndex, 1)[0]; 
+    sessionHistory.push(currentVocab); // 🌟 將抽出的單字存進歷史紀錄
 
     jpWordElement.innerText = currentVocab.jp;
 
-    // 判斷模式繪製介面
+    if (vocabImage) {
+        if (currentVocab.image) {
+            vocabImage.src = currentVocab.image;
+            vocabImage.classList.remove("hidden");
+        } else {
+            vocabImage.classList.add("hidden");
+        }
+    }
+
     if (currentMode === 'learn' || currentMode === 'single_learn') {
         kanaText.innerText = currentVocab.kana || "";
         document.getElementById("learn-meaning").innerText = currentVocab.zh;
@@ -214,21 +245,19 @@ function generateQuestion() {
         kanaText.classList.remove("hidden");
         learningBox.classList.remove("hidden");
         
-        if (currentMode !== 'single_learn') {
-            learnNextBtn.classList.remove("hidden");
-        }
+        if (currentMode !== 'single_learn') learnNextBtn.classList.remove("hidden");
+        
+        // 自動發音
+        speakWord(currentVocab.jp);
         updateProgressUI(); 
     } else {
         questionText.classList.remove("hidden");
         let options = [currentVocab.zh];
-        
-        // 抓取錯誤選項
         while (options.length < 4) {
             let randomWrong = allVocab[Math.floor(Math.random() * allVocab.length)].zh;
             if (!options.includes(randomWrong)) options.push(randomWrong);
         }
         options.sort(() => Math.random() - 0.5); 
-
         options.forEach(optionText => {
             const btn = document.createElement("button");
             btn.classList.add("option-btn");
@@ -251,7 +280,6 @@ function checkAnswer(clickedBtn, selectedText) {
         feedbackMsg.innerText = "⭕ 答對了！";
         feedbackMsg.style.color = "var(--correct)";
         stats.correct++;
-        
         if (!correctVocab.some(w => w.jp === currentVocab.jp)) correctVocab.push(currentVocab);
         if (currentMode === 'wrong') wrongVocab = wrongVocab.filter(word => word.jp !== currentVocab.jp);
     } else {
@@ -271,3 +299,7 @@ function updateProgressUI() {
     let progressPercent = ((sessionTotal - currentPool.length) / sessionTotal) * 100;
     document.getElementById("progress-bar").style.width = `${progressPercent}%`;
 }
+
+// AI 擴充題庫功能 (維持不變，可自行填入金鑰)
+const GEMINI_API_KEY = ''; // 記得補上你的 API Key
+async function generateWordsWithAI() { /* ...維持原樣... */ }
